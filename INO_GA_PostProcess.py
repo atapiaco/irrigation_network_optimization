@@ -13,12 +13,13 @@ import matplotlib.pyplot         as plt
 import pandas                    as pd
 import numpy                     as np
 import INO_GeneticOperators      as GenOps
+import OOPNET_fun                as OOPNET
 
 import csv
 
 def plot_evolucion(c,m,it):
     
-    fileName = 'Resultados\RES_SO\LOG_' + str(c) + '_' + str(m) + '_IT' + str(it) + '.csv'
+    fileName = 'Resultados\RES_SO_OOPNET\OOPNET_LOG_' + str(c) + '_' + str(m) + '_IT' + str(it) + '.csv'
     file     = open(fileName, 'r')
     
     gen      = []
@@ -37,7 +38,8 @@ def plot_evolucion(c,m,it):
         fit_mins.append(float(j[4]))
         fit_maxs.append(float(j[5]))            
     
-    
+    print(fit_mins)
+    print(fit_ave)
     fig, ax1 = plt.subplots()
     ax1.plot(gen, fit_mins, "b")
     # ax1.plot(gen, fit_maxs, "r")
@@ -47,13 +49,17 @@ def plot_evolucion(c,m,it):
     ax1.set_xlabel("Generation")
     ax1.set_ylabel("Fitness")
     ax1.set_ylim([min(fit_mins)*0.98, max(fit_mins)*1.05])
-    ax1.legend(["Min", "Max", "Avg"], loc="Upper center")
+    # ax1.legend(["Min", "Max", "Avg"], loc="Upper center")
     plt.grid(True)
     # plt.savefig("Convergencia.eps", dpi = 300)
+plt.close('all')
 
+plot_evolucion(0.8, 0.2, 1)
+
+# %%
 
 def extractInd(c,m,k):    
-    fileName = 'Resultados\RES_SO\IND_' + str(c) + '_' + str(m) + '.txt'
+    fileName = 'Resultados\RES_SO_OOPNET\OOPNET_IND_' + str(c) + '_' + str(m) + '.txt'
     file     = open(fileName, 'r')
     data     = list(csv.reader(file, delimiter=","))
     file.close()
@@ -64,7 +70,7 @@ def extractInd(c,m,k):
         
 def findBestFit(c,m):
     bestFit   = [100,0]
-    fileName = 'Resultados\RES_SO\FIT_' + str(c) + '_' + str(m) + '.txt'
+    fileName = 'Resultados\RES_SO_OOPNET\OOPNET_FIT_' + str(c) + '_' + str(m) + '.txt'
     file     = open(fileName, 'r')
     data     = list(csv.reader(file, delimiter=","))
     file.close()
@@ -74,26 +80,33 @@ def findBestFit(c,m):
     return bestFit, pos
 
 
+
+# %%
+
+
 from statistics import stdev, mean
 
-def optPopStats():    
+def optPopStats():
+    print('\n'*3)    
     print('-'*90)
     print(' c ','\t  m ','\t   Min','\t\t   Max','\t\t   Avg','\t\t   Std')
     print('-'*90)
-    valores_c = [ 0.7, 0.6, 0.5, 0.4, 0.3 ]
-    valores_m = [ 0.3, 0.4, 0.5, 0.6, 0.7 ]
+    valores_c = [ 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2 ]
+    valores_m = [ 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8 ]
     for c,m in zip(valores_c, valores_m):         
-        fileName = 'Resultados\RES_SO\FIT_' + str(c) + '_' + str(m) + '.txt'
+        fileName = 'Resultados\RES_SO_OOPNET\OOPNET_FIT_' + str(c) + '_' + str(m) + '.txt'
         file     = open(fileName, 'r')
         data     = list(csv.reader(file, delimiter=","))
         file.close()
         
         bestFit, pos = findBestFit(c,m)
         ind = extractInd(c,m,pos)
-        Q = WNF.ObtainIrrigationFlow(WNF.SolveNetwork(ind[1:],0))*3.6e6  
-        C = WNF.PipeCost(ind[1:],0)
         
-        fitnessValues = [float(j[4]) for i,j in enumerate(data)]
+        report = OOPNET.FitnessOOPNET(ind,depurar=True)
+        
+        # Q = report.pressure
+        
+        fitnessValues = [float(j[4]) for i,j in enumerate(data) if float(j[4])<10]
         fit_min = min(fitnessValues)
         fit_max = max(fitnessValues)
         fit_std = stdev(fitnessValues)
@@ -104,62 +117,67 @@ def optPopStats():
                   '\t','{0:.6f}'.format(fit_avg),
                   '\t','{0:.6f}'.format(fit_std))
     print('-'*90)
+    print('\n'*3)
+    print('Mejor individuo: ', ind)
+    
+optPopStats()
+
+
+# %%
     
 def optIndStats():    
     print('-'*90)
-    print(' c ','\t  m ','\t  L   ', '\t\t dQ', '\t\t Qav', '\t\t Qsd')
+    print(' c ','\t  m ','\t  L   ', '\t\t Qav', '\t\t Qsd')
     print('-'*90)
-    valores_c = [ 0.7, 0.6, 0.5, 0.4, 0.3 ]
-    valores_m = [ 0.3, 0.4, 0.5, 0.6, 0.7 ]
+    valores_c = [ 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2 ]
+    valores_m = [ 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8 ]
     for c,m in zip(valores_c, valores_m):        
         bestFit, pos = findBestFit(c,m)
         ind = extractInd(c,m,pos)
-        Q = WNF.ObtainIrrigationFlow(WNF.SolveNetwork(ind[1:],0))*3.6e6  
-        C = WNF.PipeCost(ind[1:],0)
+        report = OOPNET.FitnessOOPNET(ind, depurar=True)
+        Q = 1e3 * OOPNET.KE * report.pressure**0.5
+        del Q['R']
+        C = sum(report.length)
        
-        print(c,'\t',m,'\t', '{0:.2f}'.format(C), '\t{0:.4f}'.format(max(Q)-min(Q)), '\t\t{0:.4f}'.format(mean(Q)), '\t\t{0:.4f}'.format(stdev(Q)) )
+        print(c,'\t',m,'\t', '{0:.2f}'.format(C), '\t\t{0:.4f}'.format(mean(Q)), '\t\t{0:.4f}'.format(stdev(Q)) )
         
     print('-'*90)
-        
-# %%:
-
-c = 0.5
-k = 3
-
-plot_evolucion(c, 1-c, k)
-
-# %% PROBANDO INDIVIDUOS
-
-print('\n'*2)
-optPopStats()
-print('\n'*2)
+    
 optIndStats()
-print('\n'*2)
 
 # %%
 
-fit1, pos = findBestFit(0.7, 0.3)
+
+fit1, pos = findBestFit(0.5, 0.5)
 
 
 ind0 = WNC.indRef[:]
-ind1 = extractInd(0.7, 0.3, pos)
+ind1 = extractInd(0.5, 0.5, pos)
 
-X0 = WNF.SolveNetwork(ind0[1:],0)
-X1 = WNF.SolveNetwork(ind1[1:],0)
-C0 = WNF.PipeCost(ind0[1:],0)
-C1 = WNF.PipeCost(ind1[1:],0)
-Q0 = WNF.ObtainIrrigationFlow(X0)*3.6e6
-Q1 = WNF.ObtainIrrigationFlow(X1)*3.6e6
+fit0     = OOPNET.FitnessOOPNET(ind0,depurar=False)[0]
 
-R0 = WNF.RelFlowDeviation(X0)
-R1 = WNF.RelFlowDeviation(X1)
+report0 = OOPNET.FitnessOOPNET(ind0, depurar=True)
+report1 = OOPNET.FitnessOOPNET(ind1, depurar=True)
+
+C0 = sum(report0.length)
+C1 = sum(report1.length)
+
+P0 = report0.pressure
+P1 = report1.pressure
+
+Q0 = 1e3 * OOPNET.KE * report0.pressure**0.5
+Q1 = 1e3 * OOPNET.KE * report1.pressure**0.5
+
+del Q0['R']
+del Q1['R']
+
 
 print('\n'*5)
 print('-'*50)
 print(' '*5,' REFERENCE SOLUTION ')
 print('-'*50)
 
-print('Fitness ', R0)
+print('Fitness ', fit0)
 print('dQmax:  ', max(Q0)-min(Q0))
 print('Qmean:  ', mean(Q0))
 print('Qstdev: ', stdev(Q0))
@@ -169,7 +187,7 @@ print('-'*50)
 print(' '*5,' OPTIMAL SOLUTION ')
 print('-'*50)
 
-print('Fitness ', R1)
+print('Fitness ', fit1)
 print('dQmax:  ', max(Q1)-min(Q1))
 print('Qmean:  ', mean(Q1))
 print('Qstdev: ', stdev(Q1))
@@ -185,8 +203,10 @@ t0 = 5/min(Q0)
 t1 = 5/min(Q1)
 print('Time ref: ',t0,' h')
 print('Time opt: ',t1,' h')
-V0 = sum([Q0[i]*t0-5 for i in range(len(Q0))])
-V1 = sum([Q1[i]*t1-5 for i in range(len(Q1))])
+
+V0 = sum(Q0*t0-5)
+V1 = sum(Q1*t0-5)
+
 print('Excess ref: ',V0*365,' L/year')
 print('Excess ref: ',V1*365,' L/year')
 print('Excess reduction: ',(V0-V1)/V0*100,' %')
@@ -223,3 +243,65 @@ fig, ax = plt.subplots()
 plt.boxplot([Q0,Q1], notch=None, vert=None, patch_artist=None, widths=None)
 plt.ylabel("Irrigation flow rate, Q (L/s)")
 plt.xticks([1, 2], ['REFERENCE', 'OPTIMAL'])
+
+
+# %% SACAR PRESIONES DEL CAUDAL
+
+# Q = Kd * sqrt(H)
+# H = (Q/Kd)**2
+
+H0 = np.array([(q/(3.6e6*WNC.Kd))**2 for q in Q0])
+H1 = np.array([(q/(3.6e6*WNC.Kd))**2 for q in Q1])
+ 
+P0 = [ h/10 for h in H0]
+P1 = [ h/10 for h in H1]
+
+print('\nPresiones 0 (bar) : \n', P0, sep='\n')
+print('\nPresiones 1 (bar): \n', P1, sep='\n')
+
+# %%
+
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+
+# Pressure in Pa, transformed into bar
+X0m = np.reshape(X0[:49],[7,7])*1e5
+X1m = np.reshape(X1[:49],[7,7])*1e5
+
+X0m = np.transpose(X0m)
+X1m = np.transpose(X1m)
+
+X0m = np.flipud(X0m)
+X1m = np.flipud(X1m)
+
+# Create some data
+data1 = np.reshape(X0m,[7,7])
+data2 = np.reshape(X1m,[7,7])
+
+# Create figure and subplots
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
+
+minimo = min([np.min(X0m), np.min(X1m)])
+maximo = max([np.max(X0m), np.max(X1m)])
+
+# Plot data
+im1 = ax1.imshow(data1, vmin=minimo, vmax=maximo, cmap='viridis')
+im2 = ax2.imshow(data2, vmin=minimo, vmax=maximo, cmap='viridis')
+
+# Create an axis on the right side of ax2 for the colorbar
+divider = make_axes_locatable(ax2)
+cax = divider.append_axes("right", size="5%", pad=0.05)
+
+# Create colorbar
+cbar = plt.colorbar(im2, cax=cax)
+
+# Add colorbar to the left plot as well
+cbar.ax.tick_params(labelsize=10)
+
+for i in range(7):
+   for j in range(7):
+      c1 = X0m[j, i]*1e-6
+      ax1.text(i, j, str(round(c1,2)), va='center', ha='center')
+      c2 = X0m[j, i]*1e-6
+      ax2.text(i, j, str(round(c2,2)), va='center', ha='center')      
+
+plt.show()

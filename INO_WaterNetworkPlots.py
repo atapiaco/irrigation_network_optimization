@@ -12,7 +12,7 @@ import INO_WaterNetworkConstants as WNC
 
 
 def PlotTerrain():    
-    plt.style.use('seaborn-white')
+    # plt.style.use('seaborn-white')
     x    = np.linspace(WNC.terrain_limits[0], WNC.terrain_limits[1], 100)
     y    = np.linspace(WNC.terrain_limits[2], WNC.terrain_limits[3], 100)
     X, Y = np.meshgrid(x, y)
@@ -46,17 +46,14 @@ def PlotWaterNetwork(CONNECT):
     
 def PlotPumpCurve():
     qmax = (-WNC.Hb/WNC.Kb)**.5
+    print(qmax)
     qq   = np.linspace(0,qmax,1000)
     hh   = WNC.Hb + WNC.Kb*qq**2
-    plt.plot(qq*1000,hh)
+    plt.plot(qq*3600,hh)
     
-    plt.xlabel('Caudal, Q (L/h)')
+    plt.xlabel('Caudal, Q (m3/h)')
     plt.ylabel('Altura, H (m)')
     
     plt.grid(True)
 
-# %% EJEMPLOS
-
-# IND = [0, [0, 1], [1, 2], [2, 3], [0, 3]]
-
-# PlotWaterNetwork(IND[1:])
+PlotPumpCurve()

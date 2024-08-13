@@ -213,7 +213,69 @@ def G_Crossover(IND1, IND2):
     return IND1, IND2
     
     
+# %% FITNESS USANDO EPANET
+
+# from epyt import epanet
+# from statistics import stdev, mean
+
+# rough = 0.1
+# diam = 8
+# emit = 0.00038
+# Hb   = 120
+# Kb   = 1
+
+# qq = [0.01*i for i in range(110)]
+# hh = [Hb-Kb*j**2 for j in qq]
+
+# def inicializaRed():
+#     d = epanet('inicial.inp')
+#     for linkID in d.getLinkNameID():
+#         d.deleteLink(linkID)
+#     return d
+
+# def FitnessEPANET(ind):
     
+#     # Se crea la red
+#     # WN = copy.copy(WN0)
+    
+#     WN = inicializaRed()
+    
+#     # Coeficientes de emision 
+#     WN.setNodeEmitterCoeff([emit for i in range(49)] + [0])
+#     for i in range(len(qq)):
+#         WN.setCurveValue(1, i+1, [qq[i], hh[i]])
+    
+#     # Curva de la bomba
+#     for i in range(len(qq)):
+#         WN.setCurveValue(1, i+1, [qq[i], hh[i]])
+#     pumpIndex = WN.addLinkPump('PUMP', 'R1', '1', 1)
+#     WN.setLinkPumpHCurve(pumpIndex, 1)
+    
+#     # Arcos del individuo
+#     for i,newArc in enumerate(ind[1:]):        
+#         WN.addLinkPipe(str(i), str(newArc[0]+1), str(newArc[1]+1), 8.33, diam, rough)
+    
+#     res = WN.getComputedTimeSeries()
+#     WN.reloadNetwork()
+#     fit = stdev(res.Demand[0][:-1])/mean(res.Demand[0][:-1])
+
+#     return fit,
+
+# ind = G_IndividualGeneration()
+# ind = [0, [0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [0, 7], [7, 14], [14, 21],   
+#         [21, 28], [28, 35], [35, 42], [1, 8], [8, 15], [15, 22], [22, 29], [29, 36], [36, 43],
+#         [2, 9], [9, 16], [16, 23], [23, 30], [30, 37], [37, 44], [3, 10], [10, 17], [17, 24],
+#         [24, 31], [31, 38], [38, 45], [4, 11], [11, 18], [18, 25], [25, 32], [32, 39],
+#         [39, 46], [5, 12], [12, 19], [19, 26], [26, 33], [33, 40], [40, 47], [6, 13],
+#         [13, 20], [20, 27], [27, 34], [34, 41], [41, 48]]
+
+# print(FitnessEPANET(ind))
+
+
+
+
+
+
     
 # %% EJEMPLOS
 
